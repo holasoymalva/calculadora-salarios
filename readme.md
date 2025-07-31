@@ -4,7 +4,7 @@ Una herramienta interactiva para ayudar a desarrolladores de software a calcular
 
 ## 🚀 Demo en Vivo
 
-👉 **[Ver Calculadora](https://tu-usuario.github.io/calculadora-salarios/)**
+👉 **[Ver Calculadora](https://holasoymalva.github.io/calculadora-salarios/)**
 
 ## ✨ Características
 
@@ -88,6 +88,6 @@ Esta herramienta proporciona **estimaciones** basadas en tendencias del mercado 
 
 ## 📧 Contacto
 
-Creado por **[Tu Nombre]** - [@tu-usuario](https://github.com/tu-usuario)
+Creado por **[Malva]** - [@holasoymalva](https://github.com/holasoymalva)
 
 ¡Si te ayudó en tu negociación salarial, déjame saber! ⭐
