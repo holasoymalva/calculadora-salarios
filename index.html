@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Salario para Desarrolladores</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .lucide { width: 1rem; height: 1rem; display: inline; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Iconos simples en lugar de lucide-react
+        const Calculator = () => <span className="lucide">🧮</span>;
+        const DollarSign = () => <span className="lucide">💰</span>;
+        const TrendingUp = () => <span className="lucide">📈</span>;
+        const MapPin = () => <span className="lucide">📍</span>;
+        const Code = () => <span className="lucide">💻</span>;
+        const Briefcase = () => <span className="lucide">💼</span>;
+
+        const SalaryCalculator = () => {
+            const [formData, setFormData] = React.useState({
+                experience: '',
+                location: '',
+                role: '',
+                technologies: [],
+                companySize: '',
+                industry: '',
+                education: '',
+                specialization: '',
+                certifications: ''
+            });
+
+            const [salaryRange, setSalaryRange] = React.useState({ min: 0, max: 0 });
+            const [showResults, setShowResults] = React.useState(false);
+
+            // Configuración de factores y puntajes
+            const factors = {
+                experience: {
+                    'junior': { label: '0-2 años', multiplier: 1.0 },
+                    'mid': { label: '3-5 años', multiplier: 1.4 },
+                    'senior': { label: '6-8 años', multiplier: 1.8 },
+                    'lead': { label: '9+ años / Lead', multiplier: 2.3 }
+                },
+                location: {
+                    'cdmx': { label: 'Ciudad de México', multiplier: 1.3 },
+                    'guadalajara': { label: 'Guadalajara', multiplier: 1.2 },
+                    'monterrey': { label: 'Monterrey', multiplier: 1.25 },
+                    'queretaro': { label: 'Querétaro', multiplier: 1.15 },
+                    'tijuana': { label: 'Tijuana', multiplier: 1.1 },
+                    'remote': { label: 'Remoto (México)', multiplier: 1.4 },
+                    'international': { label: 'Remoto Internacional', multiplier: 2.0 },
+                    'other': { label: 'Otra ciudad', multiplier: 1.0 }
+                },
+                role: {
+                    'frontend': { label: 'Frontend Developer', multiplier: 1.0 },
+                    'backend': { label: 'Backend Developer', multiplier: 1.1 },
+                    'fullstack': { label: 'Fullstack Developer', multiplier: 1.15 },
+                    'mobile': { label: 'Mobile Developer', multiplier: 1.2 },
+                    'devops': { label: 'DevOps Engineer', multiplier: 1.3 },
+                    'data': { label: 'Data Engineer/Scientist', multiplier: 1.4 },
+                    'security': { label: 'Security Engineer', multiplier: 1.45 },
+                    'architect': { label: 'Software Architect', multiplier: 1.6 }
+                },
+                companySize: {
+                    'startup': { label: 'Startup (<50 empleados)', multiplier: 0.9 },
+                    'medium': { label: 'Mediana (50-500)', multiplier: 1.0 },
+                    'large': { label: 'Grande (500-5000)', multiplier: 1.2 },
+                    'enterprise': { label: 'Corporativo (5000+)', multiplier: 1.3 }
+                },
+                industry: {
+                    'tech': { label: 'Tecnología', multiplier: 1.2 },
+                    'fintech': { label: 'Fintech', multiplier: 1.4 },
+                    'ecommerce': { label: 'E-commerce', multiplier: 1.1 },
+                    'gaming': { label: 'Gaming', multiplier: 1.3 },
+                    'healthcare': { label: 'Salud', multiplier: 1.2 },
+                    'education': { label: 'Educación', multiplier: 0.9 },
+                    'government': { label: 'Gobierno', multiplier: 0.8 },
+                    'consulting': { label: 'Consultoría', multiplier: 1.1 },
+                    'other': { label: 'Otra industria', multiplier: 1.0 }
+                },
+                education: {
+                    'none': { label: 'Sin título universitario', multiplier: 0.9 },
+                    'technical': { label: 'Carrera técnica', multiplier: 1.0 },
+                    'bachelor': { label: 'Licenciatura', multiplier: 1.1 },
+                    'master': { label: 'Maestría', multiplier: 1.2 },
+                    'phd': { label: 'Doctorado', multiplier: 1.3 }
+                },
+                specialization: {
+                    'none': { label: 'Generalista', multiplier: 1.0 },
+                    'ai': { label: 'IA/Machine Learning', multiplier: 1.5 },
+                    'blockchain': { label: 'Blockchain', multiplier: 1.4 },
+                    'cloud': { label: 'Cloud Computing', multiplier: 1.3 },
+                    'microservices': { label: 'Microservicios', multiplier: 1.2 },
+                    'performance': { label: 'Optimización', multiplier: 1.15 }
+                }
+            };
+
+            const technologies = [
+                { id: 'react', label: 'React', bonus: 800 },
+                { id: 'vue', label: 'Vue.js', bonus: 700 },
+                { id: 'angular', label: 'Angular', bonus: 750 },
+                { id: 'node', label: 'Node.js', bonus: 900 },
+                { id: 'python', label: 'Python', bonus: 1000 },
+                { id: 'java', label: 'Java', bonus: 850 },
+                { id: 'csharp', label: 'C#', bonus: 800 },
+                { id: 'go', label: 'Go', bonus: 1200 },
+                { id: 'rust', label: 'Rust', bonus: 1300 },
+                { id: 'typescript', label: 'TypeScript', bonus: 600 },
+                { id: 'aws', label: 'AWS', bonus: 1100 },
+                { id: 'azure', label: 'Azure', bonus: 1000 },
+                { id: 'gcp', label: 'Google Cloud', bonus: 1050 },
+                { id: 'docker', label: 'Docker', bonus: 700 },
+                { id: 'kubernetes', label: 'Kubernetes', bonus: 1200 },
+                { id: 'mongodb', label: 'MongoDB', bonus: 600 },
+                { id: 'postgresql', label: 'PostgreSQL', bonus: 650 }
+            ];
+
+            const handleInputChange = (field, value) => {
+                setFormData(prev => ({
+                    ...prev,
+                    [field]: value
+                }));
+            };
+
+            const handleTechnologyChange = (techId) => {
+                setFormData(prev => ({
+                    ...prev,
+                    technologies: prev.technologies.includes(techId)
+                        ? prev.technologies.filter(t => t !== techId)
+                        : [...prev.technologies, techId]
+                }));
+            };
+
+            const calculateSalary = () => {
+                // Salario base en MXN mensual
+                const baseSalary = 25000;
+                
+                let multiplier = 1.0;
+                let techBonus = 0;
+
+                // Aplicar multiplicadores de cada factor
+                Object.keys(factors).forEach(factor => {
+                    const value = formData[factor];
+                    if (value && factors[factor][value]) {
+                        multiplier *= factors[factor][value].multiplier;
+                    }
+                });
+
+                // Calcular bonus por tecnologías
+                formData.technologies.forEach(techId => {
+                    const tech = technologies.find(t => t.id === techId);
+                    if (tech) techBonus += tech.bonus;
+                });
+
+                // Bonus por certificaciones
+                const certificationBonus = formData.certifications === 'yes' ? 2000 : 0;
+
+                // Calcular salario final
+                const finalSalary = (baseSalary * multiplier) + techBonus + certificationBonus;
+                
+                // Crear rango (+/- 15%)
+                const min = Math.round(finalSalary * 0.85);
+                const max = Math.round(finalSalary * 1.15);
+
+                setSalaryRange({ min, max });
+                setShowResults(true);
+            };
+
+            const formatCurrency = (amount) => {
+                return new Intl.NumberFormat('es-MX', {
+                    style: 'currency',
+                    currency: 'MXN',
+                    minimumFractionDigits: 0
+                }).format(amount);
+            };
+
+            const isFormValid = () => {
+                return formData.experience && formData.location && formData.role && 
+                       formData.companySize && formData.industry && formData.education;
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+                    <div className="max-w-4xl mx-auto">
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                                Calculadora de Salario para Desarrolladores
+                            </h1>
+                            <p className="text-lg text-gray-600">
+                                Descubre tu rango salarial ideal basado en tu experiencia y habilidades
+                            </p>
+                        </div>
+
+                        <div className="grid lg:grid-cols-3 gap-8">
+                            {/* Formulario */}
+                            <div className="lg:col-span-2">
+                                <div className="bg-white rounded-xl shadow-lg p-6">
+                                    <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                                        <Briefcase />
+                                        <span className="ml-2">Información Profesional</span>
+                                    </h2>
+
+                                    <div className="space-y-6">
+                                        {/* Experiencia */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Años de Experiencia *
+                                            </label>
+                                            <select
+                                                value={formData.experience}
+                                                onChange={(e) => handleInputChange('experience', e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            >
+                                                <option value="">Selecciona tu experiencia</option>
+                                                {Object.entries(factors.experience).map(([key, value]) => (
+                                                    <option key={key} value={key}>{value.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Ubicación */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <MapPin /> Ubicación *
+                                            </label>
+                                            <select
+                                                value={formData.location}
+                                                onChange={(e) => handleInputChange('location', e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            >
+                                                <option value="">Selecciona tu ubicación</option>
+                                                {Object.entries(factors.location).map(([key, value]) => (
+                                                    <option key={key} value={key}>{value.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Rol */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                <Code /> Tipo de Rol *
+                                            </label>
+                                            <select
+                                                value={formData.role}
+                                                onChange={(e) => handleInputChange('role', e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            >
+                                                <option value="">Selecciona tu rol</option>
+                                                {Object.entries(factors.role).map(([key, value]) => (
+                                                    <option key={key} value={key}>{value.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Tecnologías */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Tecnologías que Dominas
+                                            </label>
+                                            <p className="text-sm text-gray-500 mb-3">Selecciona todas las que apliquen</p>
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                {technologies.map((tech) => (
+                                                    <label key={tech.id} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={formData.technologies.includes(tech.id)}
+                                                            onChange={() => handleTechnologyChange(tech.id)}
+                                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                        />
+                                                        <span className="text-sm">{tech.label}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Tamaño de empresa */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Tamaño de Empresa *
+                                            </label>
+                                            <select
+                                                value={formData.companySize}
+                                                onChange={(e) => handleInputChange('companySize', e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            >
+                                                <option value="">Selecciona el tamaño</option>
+                                                {Object.entries(factors.companySize).map(([key, value]) => (
+                                                    <option key={key} value={key}>{value.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Industria */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Industria *
+                                            </label>
+                                            <select
+                                                value={formData.industry}
+                                                onChange={(e) => handleInputChange('industry', e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            >
+                                                <option value="">Selecciona la industria</option>
+                                                {Object.entries(factors.industry).map(([key, value]) => (
+                                                    <option key={key} value={key}>{value.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Educación */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Nivel Educativo *
+                                            </label>
+                                            <select
+                                                value={formData.education}
+                                                onChange={(e) => handleInputChange('education', e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            >
+                                                <option value="">Selecciona tu educación</option>
+                                                {Object.entries(factors.education).map(([key, value]) => (
+                                                    <option key={key} value={key}>{value.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Especialización */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Especialización
+                                            </label>
+                                            <select
+                                                value={formData.specialization}
+                                                onChange={(e) => handleInputChange('specialization', e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            >
+                                                <option value="">Selecciona especialización</option>
+                                                {Object.entries(factors.specialization).map(([key, value]) => (
+                                                    <option key={key} value={key}>{value.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Certificaciones */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                ¿Tienes Certificaciones Técnicas?
+                                            </label>
+                                            <div className="flex space-x-4">
+                                                <label className="flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        name="certifications"
+                                                        value="yes"
+                                                        checked={formData.certifications === 'yes'}
+                                                        onChange={(e) => handleInputChange('certifications', e.target.value)}
+                                                        className="mr-2"
+                                                    />
+                                                    Sí
+                                                </label>
+                                                <label className="flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        name="certifications"
+                                                        value="no"
+                                                        checked={formData.certifications === 'no'}
+                                                        onChange={(e) => handleInputChange('certifications', e.target.value)}
+                                                        className="mr-2"
+                                                    />
+                                                    No
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={calculateSalary}
+                                            disabled={!isFormValid()}
+                                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                        >
+                                            Calcular Rango Salarial
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Resultados */}
+                            <div className="lg:col-span-1">
+                                <div className="bg-white rounded-xl shadow-lg p-6 sticky top-4">
+                                    <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                        <DollarSign />
+                                        <span className="ml-2">Tu Rango Salarial</span>
+                                    </h3>
+
+                                    {showResults ? (
+                                        <div className="space-y-4">
+                                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                                                <div className="text-center">
+                                                    <p className="text-sm text-gray-600 mb-2">Rango mensual estimado</p>
+                                                    <div className="text-2xl font-bold text-green-700">
+                                                        {formatCurrency(salaryRange.min)}
+                                                    </div>
+                                                    <div className="text-lg text-gray-500 my-1">a</div>
+                                                    <div className="text-2xl font-bold text-green-700">
+                                                        {formatCurrency(salaryRange.max)}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                                <p className="text-sm text-blue-800 font-medium mb-2">
+                                                    💡 Tips para la negociación:
+                                                </p>
+                                                <ul className="text-xs text-blue-700 space-y-1">
+                                                    <li>• Usa este rango como punto de partida</li>
+                                                    <li>• Considera beneficios adicionales</li>
+                                                    <li>• Investiga la empresa específica</li>
+                                                    <li>• Prepara ejemplos de tu experiencia</li>
+                                                </ul>
+                                            </div>
+
+                                            <div className="text-center">
+                                                <TrendingUp />
+                                                <p className="text-xs text-gray-500 mt-2">
+                                                    Estimación basada en mercado mexicano 2025
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-8">
+                                            <Calculator />
+                                            <p className="text-gray-500 mt-4">
+                                                Completa el formulario para ver tu rango salarial estimado
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="text-center mt-8 text-sm text-gray-500">
+                            <p>Esta herramienta proporciona estimaciones basadas en datos del mercado mexicano.</p>
+                            <p>Los salarios reales pueden variar según múltiples factores adicionales.</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Renderizar la aplicación
+        ReactDOM.render(<SalaryCalculator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
