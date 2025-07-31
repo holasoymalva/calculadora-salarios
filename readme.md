@@ -6,6 +6,9 @@ Una herramienta interactiva para ayudar a desarrolladores de software a calcular
 
 👉 **[Ver Calculadora](https://holasoymalva.github.io/calculadora-salarios/)**
 
+<img width="1412" height="765" alt="image" src="https://github.com/user-attachments/assets/7502babc-e75a-415a-891c-a308203b56a4" />
+
+
 ## ✨ Características
 
 - **Cálculo personalizado** basado en experiencia, ubicación y habilidades
